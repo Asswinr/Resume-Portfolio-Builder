@@ -9,12 +9,13 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"message": "Invalid JSON payload"}), 400
     db: Session = SessionLocal()
-    data = request.get_json()
     username = data.get('username')
     email = data.get('email')
-    password = data.get('password')
-
+    password = data.get('password')    
     if not username or not email or not password:
         db.close()
         return jsonify({"message": "Missing username, email, or password"}), 400
@@ -37,11 +38,12 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"message": "Invalid JSON payload"}), 400
     db: Session = SessionLocal()
-    data = request.get_json()
     username = data.get('username')
-    password = data.get('password')
-
+    password = data.get('password')   
     if not username or not password:
         db.close()
         return jsonify({"message": "Missing username or password"}), 400

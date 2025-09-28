@@ -270,7 +270,9 @@ def preview_portfolio():
             col1, col2 = st.columns([1, 2])
             
             with col1:
-                if project.get("has_image") or project.get("image_url"):
+                if project.get("image_url"):
+                    st.image(project["image_url"], use_column_width=True)
+                elif project.get("has_image"):
                     st.image("https://via.placeholder.com/300x200?text=Project+Image", use_column_width=True)
             
             with col2:
@@ -280,9 +282,8 @@ def preview_portfolio():
                 st.write(f"**Technologies:** {project.get('technologies', 'Technologies')}")
                 
                 if project.get("project_url"):
-                    st.write(f"[View Project]({project['project_url']})")
-            
-            st.divider()
+                    st.write(f"[View Project]({project['project_url']})")            
+                    st.divider()
     
     # Skills section
     if st.session_state["portfolio_data"]["skills"]:
