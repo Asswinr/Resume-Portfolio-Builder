@@ -1,17 +1,24 @@
 import os
 import google.generativeai as genai
 
-def initialize_gemini():
-    """Initializes the Gemini API client using the GEMINI_API_KEY environment variable."""
-    try:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY environment variable not set.")
-        genai.configure(api_key=api_key)
-        return genai.GenerativeModel('gemini-2.5-pro')
-    except Exception as e:
-        print(f"Error initializing Gemini API: {e}")
-        return None
+# Initialize the Gemini model once when the module is loaded
+_gemini_model = None
+
+def _initialize_gemini_model():
+    """Initializes the Gemini API client and model."""
+    global _gemini_model
+    if _gemini_model is None:
+        try:
+            api_key = os.environ.get("GEMINI_API_KEY")
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY environment variable not set.")
+            genai.configure(api_key=api_key)
+            _gemini_model = genai.GenerativeModel('gemini-2.5-pro')
+        except Exception as e:
+            print(f"Error initializing Gemini API: {e}")
+            _gemini_model = None # Ensure it's None if initialization fails
+
+_initialize_gemini_model() # Call initialization when the module loads
 
 def generate_ai_content(prompt: str) -> str:
     """
@@ -23,12 +30,11 @@ def generate_ai_content(prompt: str) -> str:
     Returns:
         The generated text content from the AI, or an error message if something goes wrong.
     """
-    model = initialize_gemini()
-    if not model:
-        return "Error: Gemini API not initialized."
+    if _gemini_model is None:
+        return "Error: Gemini API not initialized. Check GEMINI_API_KEY."
 
     try:
-        response = model.generate_content(prompt)
+        response = _gemini_model.generate_content(prompt)
         return response.text
     except Exception as e:
         return f"Error generating AI content: {e}"

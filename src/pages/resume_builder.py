@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
+import requests # We'll need this to communicate with our Flask backend
 
 def show():
     st.title("Resume Builder")
@@ -43,21 +44,21 @@ def show():
 
 def personal_info_section():
     st.subheader("Personal Information")
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         name = st.text_input("Full Name", st.session_state["resume_data"]["personal_info"].get("name", ""))
         email = st.text_input("Email", st.session_state["resume_data"]["personal_info"].get("email", ""))
         phone = st.text_input("Phone", st.session_state["resume_data"]["personal_info"].get("phone", ""))
-    
+
     with col2:
         location = st.text_input("Location", st.session_state["resume_data"]["personal_info"].get("location", ""))
         linkedin = st.text_input("LinkedIn", st.session_state["resume_data"]["personal_info"].get("linkedin", ""))
         website = st.text_input("Website/Portfolio", st.session_state["resume_data"]["personal_info"].get("website", ""))
-    
+
     summary = st.text_area("Professional Summary", st.session_state["resume_data"]["personal_info"].get("summary", ""), height=150)
-    
+
     if st.button("Save Personal Information"):
         st.session_state["resume_data"]["personal_info"] = {
             "name": name,
@@ -69,6 +70,32 @@ def personal_info_section():
             "summary": summary
         }
         st.success("Personal information saved!")
+
+    # --- AI Suggestion Button for Summary ---
+    st.subheader("AI Suggestions for Summary")
+    if st.button("Get AI Suggestions for Summary"):
+        if summary:
+            st.info("Getting AI suggestions for your summary...")
+            # Prepare the data to send to the Flask backend
+            payload = {
+                "prompt": f"Generate a concise, professional, and improved resume summary (2-4 sentences) based on the following text, without any additional explanations or formatting instructions: '{summary}'"
+            }
+            try:
+                # Make a POST request to our Flask AI endpoint
+                response = requests.post("http://127.0.0.1:5000/ai/generate-content", json=payload)
+                if response.status_code == 200:
+                    ai_response = response.json()
+                    st.subheader("AI Suggested Summary:")
+                    st.write(ai_response.get("generated_content", "No suggestions found."))
+                else:
+                    st.error(f"Error from AI service: {response.status_code} - {response.text}")
+            except requests.exceptions.ConnectionError:
+                st.error("Could not connect to the Flask backend. Is it running?")
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {e}")
+        else:
+            st.warning("Please enter a summary to get AI suggestions.")
+
 
 def education_section():
     st.subheader("Education")
@@ -85,7 +112,7 @@ def education_section():
             
             if st.button("Remove", key=f"remove_edu_{i}"):
                 st.session_state["resume_data"]["education"].pop(i)
-                st.experimental_rerun()
+                st.rerun()
     
     # Add new education entry
     with st.expander("Add Education"):
@@ -114,7 +141,7 @@ def education_section():
                 "description": description
             })
             st.success("Education added!")
-            st.experimental_rerun()
+            st.rerun()
 
 def experience_section():
     st.subheader("Work Experience")
@@ -131,7 +158,7 @@ def experience_section():
             
             if st.button("Remove", key=f"remove_exp_{i}"):
                 st.session_state["resume_data"]["experience"].pop(i)
-                st.experimental_rerun()
+                st.rerun()
     
     # Add new experience entry
     with st.expander("Add Experience"):
@@ -159,7 +186,7 @@ def experience_section():
                 "description": description
             })
             st.success("Experience added!")
-            st.experimental_rerun()
+            st.rerun()
 
 def skills_section():
     st.subheader("Skills")
@@ -172,7 +199,7 @@ def skills_section():
         
         if st.button("Clear All Skills"):
             st.session_state["resume_data"]["skills"] = []
-            st.experimental_rerun()
+            st.rerun()
     
     # Add new skills
     st.write("Add Skills:")
@@ -199,7 +226,7 @@ def skills_section():
             "category": category
         })
         st.success(f"Added {skill} to your skills!")
-        st.experimental_rerun()
+        st.rerun()
 
 def projects_section():
     st.subheader("Projects")
@@ -217,7 +244,7 @@ def projects_section():
             
             if st.button("Remove", key=f"remove_proj_{i}"):
                 st.session_state["resume_data"]["projects"].pop(i)
-                st.experimental_rerun()
+                st.rerun()
     
     # Add new project
     with st.expander("Add Project"):
@@ -244,67 +271,270 @@ def projects_section():
                 "link": link
             })
             st.success("Project added!")
-            st.experimental_rerun()
+            st.rerun()
 
 def preview_resume():
-    st.header("Resume Preview")
-    
-    # Personal Information
+    st.subheader("Resume Preview")
+
     personal = st.session_state["resume_data"]["personal_info"]
-    if personal:
-        st.subheader(personal.get("name", "Your Name"))
-        contact_info = []
-        if personal.get("email"): contact_info.append(f"📧 {personal['email']}")
-        if personal.get("phone"): contact_info.append(f"📱 {personal['phone']}")
-        if personal.get("location"): contact_info.append(f"📍 {personal['location']}")
-        if personal.get("linkedin"): contact_info.append(f"🔗 {personal['linkedin']}")
-        if personal.get("website"): contact_info.append(f"🌐 {personal['website']}")
-        
-        st.write(" | ".join(contact_info))
-        
-        if personal.get("summary"):
-            st.write("### Summary")
-            st.write(personal["summary"])
-    
-    # Education
-    if st.session_state["resume_data"]["education"]:
-        st.write("### Education")
-        for edu in st.session_state["resume_data"]["education"]:
-            st.write(f"**{edu.get('degree', '')}** - {edu.get('institution', '')}")
-            st.write(f"*{edu.get('start_date', '')} - {edu.get('end_date', '')}* | {edu.get('location', '')}")
-            if edu.get('gpa'): st.write(f"GPA: {edu['gpa']}")
-            if edu.get('description'): st.write(edu['description'])
-            st.write("---")
-    
-    # Experience
-    if st.session_state["resume_data"]["experience"]:
-        st.write("### Work Experience")
-        for exp in st.session_state["resume_data"]["experience"]:
-            st.write(f"**{exp.get('title', '')}** - {exp.get('company', '')}")
-            st.write(f"*{exp.get('start_date', '')} - {exp.get('end_date', '')}* | {exp.get('location', '')}")
-            if exp.get('description'): st.write(exp['description'])
-            st.write("---")
-    
-    # Skills
-    if st.session_state["resume_data"]["skills"]:
-        st.write("### Skills")
+    education_entries = st.session_state["resume_data"]["education"]
+    experience_entries = st.session_state["resume_data"]["experience"]
+    skills_entries = st.session_state["resume_data"]["skills"]
+    projects_entries = st.session_state["resume_data"]["projects"]
+
+    # --- Custom CSS for styling ---
+    st.markdown("""
+        <style>
+        .resume-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-name {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        .header-title {
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .contact-info {
+            text-align: center;
+            font-size: 0.9em;
+            color: #777;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .section-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .item-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #34495e;
+        }
+        .item-subtitle {
+            font-style: italic;
+            color: #555;
+        }
+        .item-dates {
+            text-align: right;
+            font-size: 0.9em;
+            color: #777;
+        }
+        .bullet-point {
+            margin-left: 20px;
+            list-style-type: disc;
+        }
+        .skill-category {
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .skill-item {
+            background-color: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="resume-container">', unsafe_allow_html=True)
+
+    # --- Name and Title ---
+    if personal.get("name"):
+        st.markdown(f'<p class="header-name">{personal["name"]}</p>', unsafe_allow_html=True)
+    if personal.get("title"): # Assuming you might add a title field later
+        st.markdown(f'<p class="header-title">{personal["title"]}</p>', unsafe_allow_html=True)
+    else:
+        st.markdown('<p class="header-title">Your Professional Title</p>', unsafe_allow_html=True)
+
+
+    # --- Contact Information ---
+    contact_parts = []
+    if personal.get("location"): contact_parts.append(f'{personal["location"]}')
+    if personal.get("phone"): contact_parts.append(f'{personal["phone"]}')
+    if personal.get("email"): contact_parts.append(f'{personal["email"]}')
+    if personal.get("website"): contact_parts.append(f'<a href="{personal["website"]}" target="_blank">{personal["website"]}</a>')
+    if personal.get("linkedin"): contact_parts.append(f'<a href="{personal["linkedin"]}" target="_blank">LinkedIn</a>')
+
+    if contact_parts:
+        st.markdown(f'<p class="contact-info">{" | ".join(contact_parts)}</p>', unsafe_allow_html=True)
+
+    # --- Professional Summary ---
+    if personal.get("summary"):
+        st.markdown('<p class="section-header">Professional Summary</p>', unsafe_allow_html=True)
+        st.write(personal["summary"])
+
+    # --- Work Experience ---
+    if experience_entries:
+        st.markdown('<p class="section-header">Work Experience</p>', unsafe_allow_html=True)
+        for exp in experience_entries:
+            col_exp_left, col_exp_right = st.columns([3, 1])
+            with col_exp_left:
+                st.markdown(f'<p class="item-title">{exp.get("title", "")} at {exp.get("company", "")}</p>', unsafe_allow_html=True)
+                if exp.get("location"):
+                    st.markdown(f'<p class="item-subtitle">{exp.get("location", "")}</p>', unsafe_allow_html=True)
+            with col_exp_right:
+                st.markdown(f'<p class="item-dates">{exp.get("start_date", "")} - {exp.get("end_date", "")}</p>', unsafe_allow_html=True)
+            if exp.get("description"):
+                # Assuming description is a single string, split by lines for bullet points
+                description_lines = exp["description"].split('\n')
+                for line in description_lines:
+                    if line.strip(): # Only add non-empty lines
+                        st.markdown(f'<li class="bullet-point">{line.strip()}</li>', unsafe_allow_html=True)
+            st.markdown("---") # Small divider between experiences
+
+    # --- Education ---
+    if education_entries:
+        st.markdown('<p class="section-header">Education</p>', unsafe_allow_html=True)
+        for edu in education_entries:
+            col_edu_left, col_edu_right = st.columns([3, 1])
+            with col_edu_left:
+                st.markdown(f'<p class="item-title">{edu.get("degree", "")}</p>', unsafe_allow_html=True)
+                st.markdown(f'<p class="item-subtitle">{edu.get("institution", "")}, {edu.get("location", "")}</p>', unsafe_allow_html=True)
+            with col_edu_right:
+                st.markdown(f'<p class="item-dates">{edu.get("start_date", "")} - {edu.get("end_date", "")}</p>', unsafe_allow_html=True)
+            if edu.get("gpa"):
+                st.markdown(f'<li class="bullet-point">GPA: {edu["gpa"]}</li>', unsafe_allow_html=True)
+            if edu.get("description"):
+                description_lines = edu["description"].split('\n')
+                for line in description_lines:
+                    if line.strip():
+                        st.markdown(f'<li class="bullet-point">{line.strip()}</li>', unsafe_allow_html=True)
+            st.markdown("---") # Small divider between education entries
+
+    # --- Skills ---
+    if skills_entries:
+        st.markdown('<p class="section-header">Skills</p>', unsafe_allow_html=True)
         skills_by_category = {}
-        for skill in st.session_state["resume_data"]["skills"]:
+        for skill in skills_entries:
             category = skill.get("category", "Other")
             if category not in skills_by_category:
                 skills_by_category[category] = []
-            skills_by_category[category].append(f"{skill.get('skill', '')} ({skill.get('proficiency', '')})")
-        
+            skills_by_category[category].append(f'{skill.get("skill", "")} ({skill.get("proficiency", "")})')
+
         for category, skills in skills_by_category.items():
-            st.write(f"**{category}:** {', '.join(skills)}")
-    
-    # Projects
-    if st.session_state["resume_data"]["projects"]:
-        st.write("### Projects")
-        for proj in st.session_state["resume_data"]["projects"]:
-            st.write(f"**{proj.get('name', '')}** - {proj.get('role', '')}")
-            st.write(f"*{proj.get('period', '')}*")
-            if proj.get('description'): st.write(proj['description'])
-            if proj.get('technologies'): st.write(f"**Technologies:** {proj['technologies']}")
-            if proj.get('link'): st.write(f"**Link:** {proj['link']}")
-            st.write("---")
+            st.markdown(f'<p class="skill-category">{category}:</p>', unsafe_allow_html=True)
+            st.markdown(f'<div class="skills-list">{"".join([f"<span class='skill-item'>{s}</span>" for s in skills])}</div>', unsafe_allow_html=True)
+        st.markdown("---")
+
+    # --- Projects ---
+    if projects_entries:
+        st.markdown('<p class="section-header">Projects</p>', unsafe_allow_html=True)
+        for proj in projects_entries:
+            st.markdown(f'<p class="item-title">{proj.get("name", "")}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p class="item-subtitle">Role: {proj.get("role", "")} | Period: {proj.get("period", "")}</p>', unsafe_allow_html=True)
+            if proj.get("technologies"):
+                st.markdown(f'<li class="bullet-point">Technologies: {proj["technologies"]}</li>', unsafe_allow_html=True)
+            if proj.get("description"):
+                description_lines = proj["description"].split('\n')
+                for line in description_lines:
+                    if line.strip():
+                        st.markdown(f'<li class="bullet-point">{line.strip()}</li>', unsafe_allow_html=True)
+            if proj.get("link"):
+                st.markdown(f'<li class="bullet-point">Link: <a href="{proj["link"]}" target="_blank">{proj["link"]}</a></li>', unsafe_allow_html=True)
+            st.markdown("---")
+
+    st.markdown('</div>', unsafe_allow_html=True) # Close resume-container
+
+
+
+def resume_builder_page():
+    st.title("Resume Builder")
+    st.write("Enter your resume details below and get AI-powered suggestions!")
+
+    # --- Contact Information ---
+    st.header("Contact Information")
+    col1, col2 = st.columns(2)
+    with col1:
+        name = st.text_input("Full Name")
+        email = st.text_input("Email")
+    with col2:
+        phone = st.text_input("Phone Number")
+        linkedin = st.text_input("LinkedIn Profile URL")
+
+    # --- Summary/Objective ---
+    st.header("Summary/Objective")
+    summary = st.text_area("Professional Summary or Objective", height=150)
+
+    # --- Work Experience ---
+    st.header("Work Experience")
+    # We'll make this dynamic later, for now, a single entry
+    job_title = st.text_input("Job Title")
+    company = st.text_input("Company")
+    col3, col4 = st.columns(2)
+    with col3:
+        start_date_exp = st.text_input("Start Date (e.g., Jan 2020)", key="exp_start")
+    with col4:
+        end_date_exp = st.text_input("End Date (e.g., Dec 2022 or Present)", key="exp_end")
+    responsibilities = st.text_area("Key Responsibilities and Achievements (bullet points)", height=150)
+
+    # --- Education ---
+    st.header("Education")
+    degree = st.text_input("Degree/Certification")
+    university = st.text_input("University/Institution")
+    col5, col6 = st.columns(2)
+    with col5:
+        start_date_edu = st.text_input("Start Date (e.g., Sep 2018)", key="edu_start")
+    with col6:
+        end_date_edu = st.text_input("End Date (e.g., May 2022)", key="edu_end")
+
+    # --- Skills ---
+    st.header("Skills")
+    skills = st.text_area("List your skills (comma-separated)", height=100)
+
+    # --- AI Suggestion Button ---
+    st.header("AI Suggestions")
+    if st.button("Get AI Suggestions for Summary"):
+        if summary:
+            st.info("Getting AI suggestions for your summary...")
+            # Prepare the data to send to the Flask backend
+            payload = {
+                "prompt": f"Improve this professional summary for a resume: '{summary}'"
+            }
+            try:
+                # Make a POST request to our Flask AI endpoint
+                response = requests.post("http://127.0.0.1:5000/ai/generate-content", json=payload)
+                if response.status_code == 200:
+                    ai_response = response.json()
+                    st.subheader("AI Suggested Summary:")
+                    st.write(ai_response.get("generated_content", "No suggestions found."))
+                else:
+                    st.error(f"Error from AI service: {response.status_code} - {response.text}")
+            except requests.exceptions.ConnectionError:
+                st.error("Could not connect to the Flask backend. Is it running?")
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {e}")
+        else:
+            st.warning("Please enter a summary to get AI suggestions.")
+
+# This is important for Streamlit to recognize this as a page
+if __name__ == "__main__":
+    resume_builder_page()
