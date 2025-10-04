@@ -10,8 +10,9 @@ def generate_resume_pdf():
     try:
         data = request.get_json(silent=True)
         if not data:
-        # Validate required fields
-        required_fields = ['personal_info', 'about_me', 'skills', 'education', 'experience', 'projects', 'contacts']
+            return jsonify({"error": "Invalid or missing JSON data"}), 400
+
+        # Validate required fields        required_fields = ['personal_info', 'about_me', 'skills', 'education', 'experience', 'projects', 'contacts']
 
         for field in required_fields:
             if field not in data:
@@ -21,7 +22,6 @@ def generate_resume_pdf():
             return jsonify({"error": "'personal_info' must be a dictionary"}), 400
 
         if not isinstance(data.get('about_me', ''), str):
-            return jsonify({"error": "'about_me' must be a string"}), 400        if not isinstance(user_data.get('about_me', ''), str):
             return jsonify({"error": "'about_me' must be a string"}), 400
         # Data is already extracted from request.get_json() at line 10
         # Validation ensures required fields exist        }
@@ -91,7 +91,7 @@ def generate_resume_pdf():
             <div class="container">
                 <div class="header">
                     <p>{html.escape(data.get('personal_info', {}).get('role', ''))}</p>
-                    <p>{html.escape(data.get('personal_info', {}).get('email', ''))} | {html.escape(data.get('personal_info', {}).get('phone', ''))} | {html.escape(data.get('personal_info', {}).get('linkedin', ''))} | {html.escape(data.get('personal_info', {}).get('github', ''))}</p>                    <p>{data.get('personal_info', {}).get('email', '')} | {data.get('personal_info', {}).get('phone', '')} | {data.get('personal_info', {}).get('linkedin', '')} | {data.get('personal_info', {}).get('github', '')}</p>
+                    <p>{html.escape(data.get('personal_info', {}).get('email', ''))} | {html.escape(data.get('personal_info', {}).get('phone', ''))} | {html.escape(data.get('personal_info', {}).get('linkedin', ''))} | {html.escape(data.get('personal_info', {}).get('github', ''))}</p>           
                 </div>
 
                 <div class="section">
