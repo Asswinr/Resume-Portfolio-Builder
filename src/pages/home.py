@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 
 def show():
@@ -23,11 +24,11 @@ def show():
         st.write("Create a professional resume with AI assistance.")
         if st.button("Create Resume", key="resume_btn"):
             st.session_state["page"] = "Resume Builder"
-            st.experimental_rerun()
+            st.rerun()
     
     with col2:
         st.info("### Portfolio Builder")
         st.write("Showcase your work with a customizable portfolio.")
         if st.button("Create Portfolio", key="portfolio_btn"):
             st.session_state["page"] = "Portfolio Builder"
-            st.experimental_rerun()
+            st.rerun()

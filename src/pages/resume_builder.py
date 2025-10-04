@@ -1,309 +1,350 @@
 import streamlit as st
-import pandas as pd
 
 def show():
-    st.title("Resume Builder")
-    
-    # Initialize session state for resume data
     if "resume_data" not in st.session_state:
         st.session_state["resume_data"] = {
             "personal_info": {},
-            "education": [],
+            "skills": {},
+            "achievements": [],
             "experience": [],
-            "skills": [],
-            "projects": []
+            "education": [],
+            "projects": [],
+            "additional_info": []
         }
-    
-    # Sidebar for sections
-    section = st.sidebar.radio(
-        "Resume Sections",
-        ["Personal Information", "Education", "Experience", "Skills", "Projects"]
-    )
-    
-    if section == "Personal Information":
+
+    # Create tabs for different sections
+    tabs = st.tabs([
+        "Personal Info",
+        "Skills",
+        "Key Achievements",
+        "Experience",
+        "Education",
+        "Projects",
+        "Additional Info",
+        "Preview"
+    ])
+
+    with tabs[0]:
         personal_info_section()
-    elif section == "Education":
-        education_section()
-    elif section == "Experience":
-        experience_section()
-    elif section == "Skills":
+    with tabs[1]:
         skills_section()
-    elif section == "Projects":
+    with tabs[2]:
+        achievements_section()
+    with tabs[3]:
+        experience_section()
+    with tabs[4]:
+        education_section()
+    with tabs[5]:
         projects_section()
-    
-    # Preview and export options
-    st.sidebar.divider()
-    if st.sidebar.button("Preview Resume"):
+    with tabs[6]:
+        additional_info_section()
+    with tabs[7]:
         preview_resume()
-    
-    if st.sidebar.button("Export Resume"):
-        # This will be implemented in the export functionality task
-        st.sidebar.success("Export functionality will be implemented soon!")
+
 
 def personal_info_section():
     st.subheader("Personal Information")
     
+    # Get existing personal info or initialize empty dict
+    personal_info = st.session_state["resume_data"].get("personal_info", {})
+    
+    # Create two columns for layout
     col1, col2 = st.columns(2)
     
     with col1:
-        name = st.text_input("Full Name", st.session_state["resume_data"]["personal_info"].get("name", ""))
-        email = st.text_input("Email", st.session_state["resume_data"]["personal_info"].get("email", ""))
-        phone = st.text_input("Phone", st.session_state["resume_data"]["personal_info"].get("phone", ""))
-    
+        name = st.text_input("Full Name", personal_info.get("name", ""))
+        role = st.text_input("Professional Role", personal_info.get("role", ""))
+        email = st.text_input("Email", personal_info.get("email", ""))
+        phone = st.text_input("Phone", personal_info.get("phone", ""))
+        
     with col2:
-        location = st.text_input("Location", st.session_state["resume_data"]["personal_info"].get("location", ""))
-        linkedin = st.text_input("LinkedIn", st.session_state["resume_data"]["personal_info"].get("linkedin", ""))
-        website = st.text_input("Website/Portfolio", st.session_state["resume_data"]["personal_info"].get("website", ""))
+        location = st.text_input("Location", personal_info.get("location", ""))
+        linkedin = st.text_input("LinkedIn URL", personal_info.get("linkedin", ""))
+        website = st.text_input("Portfolio Website", personal_info.get("website", ""))
     
-    summary = st.text_area("Professional Summary", st.session_state["resume_data"]["personal_info"].get("summary", ""), height=150)
+    summary = st.text_area("Professional Summary", personal_info.get("summary", ""), height=150)
     
-    if st.button("Save Personal Information"):
-        st.session_state["resume_data"]["personal_info"] = {
-            "name": name,
-            "email": email,
-            "phone": phone,
-            "location": location,
-            "linkedin": linkedin,
-            "website": website,
-            "summary": summary
-        }
-        st.success("Personal information saved!")
+    # Update session state
+    st.session_state["resume_data"]["personal_info"] = {
+        "name": name,
+        "role": role,
+        "email": email,
+        "phone": phone,
+        "location": location,
+        "linkedin": linkedin,
+        "website": website,
+        "summary": summary
+    }
+
 
 def education_section():
     st.subheader("Education")
     
+    # Initialize education list if not exists
+    if "education" not in st.session_state["resume_data"]:
+        st.session_state["resume_data"]["education"] = []
+    
     # Display existing education entries
     for i, edu in enumerate(st.session_state["resume_data"]["education"]):
-        with st.expander(f"{edu.get('degree', 'Education')} - {edu.get('institution', '')}"):
-            st.write(f"**Degree:** {edu.get('degree', '')}")
-            st.write(f"**Institution:** {edu.get('institution', '')}")
-            st.write(f"**Location:** {edu.get('location', '')}")
-            st.write(f"**Period:** {edu.get('start_date', '')} - {edu.get('end_date', '')}")
-            st.write(f"**GPA:** {edu.get('gpa', '')}")
-            st.write(f"**Description:** {edu.get('description', '')}")
-            
-            if st.button("Remove", key=f"remove_edu_{i}"):
+        with st.expander(f"Education {i+1}: {edu.get('degree', 'No Degree')} - {edu.get('institution', 'No Institution')}"):
+            st.write(edu)
+            if st.button("Remove", key=f"remove_education_{i}"):
                 st.session_state["resume_data"]["education"].pop(i)
-                st.experimental_rerun()
+                st.rerun()
     
     # Add new education entry
-    with st.expander("Add Education"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            degree = st.text_input("Degree/Certificate", key="new_edu_degree")
-            institution = st.text_input("Institution", key="new_edu_institution")
-            location = st.text_input("Location", key="new_edu_location")
-        
-        with col2:
-            start_date = st.text_input("Start Date", key="new_edu_start")
-            end_date = st.text_input("End Date (or 'Present')", key="new_edu_end")
-            gpa = st.text_input("GPA (optional)", key="new_edu_gpa")
-        
-        description = st.text_area("Description/Achievements", key="new_edu_desc")
-        
-        if st.button("Add Education"):
-            st.session_state["resume_data"]["education"].append({
-                "degree": degree,
-                "institution": institution,
-                "location": location,
-                "start_date": start_date,
-                "end_date": end_date,
-                "gpa": gpa,
-                "description": description
-            })
-            st.success("Education added!")
-            st.experimental_rerun()
+    with st.expander("Add New Education"):
+        with st.form("education_form"):
+            degree = st.text_input("Degree/Certificate")
+            institution = st.text_input("Institution")
+            location = st.text_input("Location")
+            start_date = st.text_input("Start Date (e.g., Sep 2020)")
+            end_date = st.text_input("End Date (e.g., Jun 2024 or Present)")
+            description = st.text_area("Description (use new lines for bullet points)")
+            
+            if st.form_submit_button("Add Education"):
+                if degree and institution:
+                    new_education = {
+                        "degree": degree,
+                        "institution": institution,
+                        "location": location,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "description": description
+                    }
+                    st.session_state["resume_data"]["education"].append(new_education)
+                    st.success("Education added!")
+                    st.rerun()
+                else:
+                    st.warning("Please enter at least the degree and institution.")
+
 
 def experience_section():
-    st.subheader("Work Experience")
+    st.subheader("Professional Experience")
+    
+    # Initialize experience list if not exists
+    if "experience" not in st.session_state["resume_data"]:
+        st.session_state["resume_data"]["experience"] = []
     
     # Display existing experience entries
     for i, exp in enumerate(st.session_state["resume_data"]["experience"]):
-        with st.expander(f"{exp.get('title', 'Position')} at {exp.get('company', '')}"):
-            st.write(f"**Title:** {exp.get('title', '')}")
-            st.write(f"**Company:** {exp.get('company', '')}")
-            st.write(f"**Location:** {exp.get('location', '')}")
-            st.write(f"**Period:** {exp.get('start_date', '')} - {exp.get('end_date', '')}")
-            st.write(f"**Description:**")
-            st.write(exp.get('description', ''))
-            
-            if st.button("Remove", key=f"remove_exp_{i}"):
+        with st.expander(f"Experience {i+1}: {exp.get('title', 'No Title')} at {exp.get('company', 'No Company')}"):
+            st.write(exp)
+            if st.button("Remove", key=f"remove_experience_{i}"):
                 st.session_state["resume_data"]["experience"].pop(i)
-                st.experimental_rerun()
+                st.rerun()
     
     # Add new experience entry
-    with st.expander("Add Experience"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            title = st.text_input("Job Title", key="new_exp_title")
-            company = st.text_input("Company", key="new_exp_company")
-            location = st.text_input("Location", key="new_exp_location")
-        
-        with col2:
-            start_date = st.text_input("Start Date", key="new_exp_start")
-            end_date = st.text_input("End Date (or 'Present')", key="new_exp_end")
-        
-        description = st.text_area("Description/Achievements", key="new_exp_desc", 
-                                 help="Use bullet points for better readability")
-        
-        if st.button("Add Experience"):
-            st.session_state["resume_data"]["experience"].append({
-                "title": title,
-                "company": company,
-                "location": location,
-                "start_date": start_date,
-                "end_date": end_date,
-                "description": description
-            })
-            st.success("Experience added!")
-            st.experimental_rerun()
+    with st.expander("Add New Experience"):
+        with st.form("experience_form"):
+            title = st.text_input("Job Title")
+            company = st.text_input("Company")
+            location = st.text_input("Location")
+            start_date = st.text_input("Start Date (e.g., Jan 2020)")
+            end_date = st.text_input("End Date (e.g., Dec 2023 or Present)")
+            description = st.text_area("Description (use new lines for bullet points)")
+            
+            if st.form_submit_button("Add Experience"):
+                if title and company:
+                    new_experience = {
+                        "title": title,
+                        "company": company,
+                        "location": location,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "description": description
+                    }
+                    st.session_state["resume_data"]["experience"].append(new_experience)
+                    st.success("Experience added!")
+                    st.rerun()
+                else:
+                    st.warning("Please enter at least the job title and company.")
+
 
 def skills_section():
-    st.subheader("Skills")
+    st.subheader("Skills & Expertise")
     
-    # Display existing skills
-    if st.session_state["resume_data"]["skills"]:
-        st.write("Current Skills:")
-        skills_df = pd.DataFrame(st.session_state["resume_data"]["skills"])
-        st.dataframe(skills_df)
-        
-        if st.button("Clear All Skills"):
-            st.session_state["resume_data"]["skills"] = []
-            st.experimental_rerun()
+    # Initialize skills dict if not exists
+    if "skills" not in st.session_state["resume_data"]:
+        st.session_state["resume_data"]["skills"] = {}
     
-    # Add new skills
-    st.write("Add Skills:")
-    col1, col2 = st.columns(2)
+    # Display existing skill categories
+    for category in st.session_state["resume_data"]["skills"].keys():
+        with st.expander(f"Category: {category}"):
+            st.write(", ".join(st.session_state["resume_data"]["skills"][category]))
+            if st.button("Remove Category", key=f"remove_category_{category}"):
+                del st.session_state["resume_data"]["skills"][category]
+                st.rerun()
     
-    with col1:
-        skill = st.text_input("Skill Name")
-    
-    with col2:
-        proficiency = st.select_slider(
-            "Proficiency",
-            options=["Beginner", "Intermediate", "Advanced", "Expert"]
-        )
-    
-    category = st.selectbox(
-        "Category",
-        ["Technical", "Soft Skills", "Languages", "Tools", "Other"]
-    )
-    
-    if st.button("Add Skill"):
-        st.session_state["resume_data"]["skills"].append({
-            "skill": skill,
-            "proficiency": proficiency,
-            "category": category
-        })
-        st.success(f"Added {skill} to your skills!")
-        st.experimental_rerun()
+    # Add new skill category
+    with st.expander("Add New Skill Category"):
+        with st.form("skills_form"):
+            category = st.text_input("Category Name (e.g., Programming Languages, Tools, Soft Skills)")
+            skills = st.text_area("Skills (comma-separated)")
+            
+            if st.form_submit_button("Add Skills"):
+                if category and skills:
+                    # Convert skills string to list and clean up
+                    skills_list = [skill.strip() for skill in skills.split(",") if skill.strip()]
+                    st.session_state["resume_data"]["skills"][category] = skills_list
+                    st.success("Skills category added!")
+                    st.rerun()
+                else:
+                    st.warning("Please enter both category name and skills.")
+
 
 def projects_section():
     st.subheader("Projects")
-    
-    # Display existing projects
+
+    # Initialize projects list if not exists
+    if "projects" not in st.session_state["resume_data"]:
+        st.session_state["resume_data"]["projects"] = []
+
+    # Display existing project entries
     for i, proj in enumerate(st.session_state["resume_data"]["projects"]):
-        with st.expander(f"{proj.get('name', 'Project')}"):
-            st.write(f"**Project Name:** {proj.get('name', '')}")
-            st.write(f"**Role:** {proj.get('role', '')}")
-            st.write(f"**Period:** {proj.get('period', '')}")
-            st.write(f"**Description:**")
-            st.write(proj.get('description', ''))
-            st.write(f"**Technologies:** {proj.get('technologies', '')}")
-            st.write(f"**Link:** {proj.get('link', '')}")
-            
-            if st.button("Remove", key=f"remove_proj_{i}"):
+        with st.expander(f"Project {i+1}: {proj.get('title', 'No Title')}"):
+            st.write(proj)
+            if st.button("Remove", key=f"remove_project_{i}"):
                 st.session_state["resume_data"]["projects"].pop(i)
-                st.experimental_rerun()
-    
-    # Add new project
-    with st.expander("Add Project"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            name = st.text_input("Project Name", key="new_proj_name")
-            role = st.text_input("Your Role", key="new_proj_role")
-        
-        with col2:
-            period = st.text_input("Time Period", key="new_proj_period")
-            technologies = st.text_input("Technologies Used", key="new_proj_tech")
-        
-        description = st.text_area("Project Description", key="new_proj_desc")
-        link = st.text_input("Project Link (if any)", key="new_proj_link")
-        
-        if st.button("Add Project"):
-            st.session_state["resume_data"]["projects"].append({
-                "name": name,
-                "role": role,
-                "period": period,
-                "description": description,
-                "technologies": technologies,
-                "link": link
-            })
-            st.success("Project added!")
-            st.experimental_rerun()
+                st.rerun()
+
+    # Add new project entry
+    with st.expander("Add New Project"):
+        with st.form("project_form"):
+            title = st.text_input("Project Title")
+            role = st.text_input("Your Role")
+            period = st.text_input("Time Period (e.g., Jan 2023 - Mar 2023)")
+            description = st.text_area("Description (use new lines for bullet points)")
+            technologies = st.text_input("Technologies Used (comma-separated)")
+            link = st.text_input("Project Link (optional)")
+
+            if st.form_submit_button("Add Project"):
+                if title and description:
+                    new_project = {
+                        "title": title,
+                        "role": role,
+                        "period": period,
+                        "description": description,
+                        "technologies": technologies,
+                        "link": link
+                    }
+                    st.session_state["resume_data"]["projects"].append(new_project)
+                    st.success("Project added!")
+                    st.rerun()
+                else:
+                    st.warning("Please enter at least the project title and description.")
+
+
+def achievements_section():
+    st.subheader("Key Achievements")
+
+    # Display existing achievements
+    for i, achievement in enumerate(st.session_state["resume_data"]["achievements"]):
+        with st.expander(f"Achievement {i+1}"):
+            st.write(achievement)
+            if st.button("Remove", key=f"remove_achievement_{i}"):
+                st.session_state["resume_data"]["achievements"].pop(i)
+                st.rerun()
+
+    # Add new achievement entry
+    with st.expander("Add New Achievement"):
+        new_achievement = st.text_area("Achievement Description", key="new_achievement_desc")
+        if st.button("Add Achievement"):
+            if new_achievement:
+                st.session_state["resume_data"]["achievements"].append(new_achievement)
+                st.success("Achievement added!")
+                st.rerun()
+            else:
+                st.warning("Please enter an achievement description.")
+
 
 def preview_resume():
-    st.header("Resume Preview")
-    
-    # Personal Information
-    personal = st.session_state["resume_data"]["personal_info"]
-    if personal:
-        st.subheader(personal.get("name", "Your Name"))
-        contact_info = []
-        if personal.get("email"): contact_info.append(f"📧 {personal['email']}")
-        if personal.get("phone"): contact_info.append(f"📱 {personal['phone']}")
-        if personal.get("location"): contact_info.append(f"📍 {personal['location']}")
-        if personal.get("linkedin"): contact_info.append(f"🔗 {personal['linkedin']}")
-        if personal.get("website"): contact_info.append(f"🌐 {personal['website']}")
-        
-        st.write(" | ".join(contact_info))
-        
-        if personal.get("summary"):
-            st.write("### Summary")
-            st.write(personal["summary"])
-    
-    # Education
-    if st.session_state["resume_data"]["education"]:
-        st.write("### Education")
-        for edu in st.session_state["resume_data"]["education"]:
-            st.write(f"**{edu.get('degree', '')}** - {edu.get('institution', '')}")
-            st.write(f"*{edu.get('start_date', '')} - {edu.get('end_date', '')}* | {edu.get('location', '')}")
-            if edu.get('gpa'): st.write(f"GPA: {edu['gpa']}")
-            if edu.get('description'): st.write(edu['description'])
-            st.write("---")
-    
-    # Experience
-    if st.session_state["resume_data"]["experience"]:
-        st.write("### Work Experience")
-        for exp in st.session_state["resume_data"]["experience"]:
-            st.write(f"**{exp.get('title', '')}** - {exp.get('company', '')}")
-            st.write(f"*{exp.get('start_date', '')} - {exp.get('end_date', '')}* | {exp.get('location', '')}")
-            if exp.get('description'): st.write(exp['description'])
-            st.write("---")
-    
-    # Skills
-    if st.session_state["resume_data"]["skills"]:
-        st.write("### Skills")
-        skills_by_category = {}
-        for skill in st.session_state["resume_data"]["skills"]:
-            category = skill.get("category", "Other")
-            if category not in skills_by_category:
-                skills_by_category[category] = []
-            skills_by_category[category].append(f"{skill.get('skill', '')} ({skill.get('proficiency', '')})")
-        
-        for category, skills in skills_by_category.items():
-            st.write(f"**{category}:** {', '.join(skills)}")
-    
-    # Projects
-    if st.session_state["resume_data"]["projects"]:
-        st.write("### Projects")
-        for proj in st.session_state["resume_data"]["projects"]:
-            st.write(f"**{proj.get('name', '')}** - {proj.get('role', '')}")
-            st.write(f"*{proj.get('period', '')}*")
-            if proj.get('description'): st.write(proj['description'])
-            if proj.get('technologies'): st.write(f"**Technologies:** {proj['technologies']}")
-            if proj.get('link'): st.write(f"**Link:** {proj['link']}")
-            st.write("---")
+    st.subheader("Resume Preview")
+
+    # Generate resume HTML
+    resume_data = st.session_state["resume_data"]
+    resume_html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{resume_data['personal_info'].get('name', 'Resume')}</title>
+        <style>
+            body {{
+                font-family: 'Arial', sans-serif;
+                margin: 0;
+                padding: 0;
+                background: #f4f4f9;
+                color: #333;
+            }}
+            .container {{
+                width: 90%;
+                margin: 0 auto;
+                padding: 20px;
+            }}
+            .header {{
+                text-align: center;
+                padding: 50px 0;
+                background: #0056b3;
+                color: #fff;
+                border-radius: 10px;
+            }}
+            .header h1 {{
+                font-size: 2.5rem;
+                margin: 0;
+            }}
+            .header h2 {{
+                font-size: 1.5rem;
+                margin: 10px 0;
+            }}
+            .section {{
+                margin-bottom: 30px;
+                padding: 20px;
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }}
+            .section h3 {{
+                font-size: 1.8rem;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #0056b3;
+                display: inline-block;
+            }}
+            .timeline-item {{
+                margin-bottom: 15px;
+                padding: 10px;
+                background: #f4f4f9;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }}
+            .timeline-item h4 {{
+                font-size: 1.2rem;
+                margin: 0;
+            }}
+            .timeline-item p {{
+                margin: 5px 0;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>{resume_data['personal_info'].get('name', 'Your Name')}</h1>
+                <h2>{resume_data['personal_info'].get('role', 'Professional Role')}</h2>
+                <p>{resume_data['personal_info'].get('summary', 'Professional Summary')}</p>
+            </div>
+
+            <div class="section">
+                <h3>Education</h3>
+                {''.join([f'<div class="timeline-item"><h4>{edu.get("et("de", "N/A")ee", "N/.get(")} - {edu.g", "N/A")("institution.get(" "N/A")}</", "N/A")><p>{edu.gea("rteget(s, "NA)pu.g("",NdAdugi(u,)    st.subheader("Additional Information")
+    # Placeholder for additional information input
+    st.write("This section is under construction.")
+
+
+# This is important for Streamlit to recognize this as a page
+if __name__ == "__main__":
+    try:
+        show()
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
