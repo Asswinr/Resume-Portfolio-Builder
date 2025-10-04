@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{personal_info.name}} - Portfolio</title>
+    <style>{{ css_content }}</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <nav>
+            <div class="logo">{{personal_info.name}}</div>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home">
+            <div class="home-content">
+                <h1>Hello, I'm {{personal_info.name}}</h1>
+                <p>A Passionate {{personal_info.role}}</p>
+                <a href="#experience" class="cta-button">View My Work</a>
+            </div>
+        </section>
+
+        <section id="about">
+            <div class="container">
+                <h2>About Me</h2>
+                <p>{{about_me.biography}}</p>
+                {{#if about_me.skills}}
+                <div class="skills">
+                    <h3>Skills</h3>
+                    <ul class="skills-list">
+                        {{#each about_me.skills}}
+                        <li>{{this.name}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+                {{/if}}
+            </div>
+        </section>
+
+        <section id="education">
+            <div class="container">
+                <h2>Education</h2>
+                <div class="timeline">
+                    {{education_timeline}}
+                </div>
+            </div>
+        </section>
+
+        <section id="experience">
+            <div class="container">
+                <h2>Experience</h2>
+                <div class="timeline">
+                    {{experience_timeline}}
+                </div>
+            </div>
+        </section>
+
+        <section id="projects">
+            <div class="container">
+                <h2>Projects</h2>
+                <div class="projects-grid">
+                    {{projects_timeline}}
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="container">
+                <h2>Get In Touch</h2>
+                <p>I'm currently open to new opportunities. Feel free to reach out via email or connect with me on social media!</p>
+                <div class="contact-info">
+                    <p>Email: <a href="mailto:{{contact.email}}">{{contact.email}}</a></p>
+                    {{#if contact.phone}}<p>Phone: {{contact.phone}}</p>{{/if}}
+                    {{#if contact.linkedin}}<p>LinkedIn: <a href="{{contact.linkedin}}" target="_blank">{{contact.linkedin}}</a></p>{{/if}}
+                    {{#if contact.github}}<p>GitHub: <a href="{{contact.github}}" target="_blank">{{contact.github}}</a></p>{{/if}}
+                    {{#if contact.twitter}}<p>Twitter: <a href="{{contact.twitter}}" target="_blank">{{contact.twitter}}</a></p>{{/if}}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 {{personal_info.name}}. All Rights Reserved.</p>
+    </footer>
+
+    <script>{{ js_content }}</script>
+</body>
+</html>

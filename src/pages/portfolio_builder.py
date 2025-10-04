@@ -1,42 +1,46 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
+from src.data.portfolio_data import PortfolioData, PersonalInfo, AboutMe, Experience, Education, Project, Contact, Skill
+from src.utils.portfolio_generator import generate_portfolio_html
 
 def show():
     st.title("Portfolio Builder")
-    
+
     # Initialize session state for portfolio data
     if "portfolio_data" not in st.session_state:
-        st.session_state["portfolio_data"] = {
-            "personal_info": {},
-            "about": "",
-            "projects": [],
-            "skills": [],
-            "contact": {}
-        }
-    
+        st.session_state["portfolio_data"] = PortfolioData()
+
     # Sidebar for sections
     section = st.sidebar.radio(
         "Portfolio Sections",
-        ["Personal Information", "About Me", "Projects", "Skills", "Contact"]
+        ["Personal Information", "About Me", "Experience", "Education", "Projects", "Contact"]
     )
-    
+
     if section == "Personal Information":
         personal_info_section()
     elif section == "About Me":
         about_section()
+    elif section == "Experience":
+        experience_section()
+    elif section == "Education":
+        education_section()
     elif section == "Projects":
         projects_section()
-    elif section == "Skills":
-        skills_section()
     elif section == "Contact":
         contact_section()
-    
+
     # Preview and export options
-    st.sidebar.divider()
+    st.sidebar.subheader("Customization")
+    primary_color = st.sidebar.color_picker("Select Primary Color", "#0056b3")
+    st.session_state["portfolio_data"].custom_css = f"h1, h2, h3, .project-item a, .contact-info a {{ color: {primary_color}; }}"
     if st.sidebar.button("Preview Portfolio"):
-        preview_portfolio()
-    
+        st.subheader("Live Preview")
+        portfolio_html = generate_portfolio_html(st.session_state["portfolio_data"])
+        # Render portfolio preview correctly
+        components.html(portfolio_html, height=800, scrolling=True)
+
     if st.sidebar.button("Export Portfolio"):
         # This will be implemented in the export functionality task
         st.sidebar.success("Export functionality will be implemented soon!")
@@ -44,278 +48,187 @@ def show():
 def personal_info_section():
     st.subheader("Personal Information")
     
+    portfolio_data = st.session_state["portfolio_data"].personal_info
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        name = st.text_input("Full Name", st.session_state["portfolio_data"]["personal_info"].get("name", ""))
-        title = st.text_input("Professional Title", st.session_state["portfolio_data"]["personal_info"].get("title", ""))
+        name = st.text_input("Full Name", portfolio_data.name)
+        role = st.text_input("Professional Role", portfolio_data.role)
     
     with col2:
-        location = st.text_input("Location", st.session_state["portfolio_data"]["personal_info"].get("location", ""))
-        photo = st.file_uploader("Profile Photo", type=["jpg", "jpeg", "png"])
-    
-    social_media = st.expander("Social Media Links")
-    with social_media:
-        linkedin = st.text_input("LinkedIn", st.session_state["portfolio_data"]["personal_info"].get("linkedin", ""))
-        github = st.text_input("GitHub", st.session_state["portfolio_data"]["personal_info"].get("github", ""))
-        twitter = st.text_input("Twitter", st.session_state["portfolio_data"]["personal_info"].get("twitter", ""))
-        other = st.text_input("Other", st.session_state["portfolio_data"]["personal_info"].get("other_social", ""))
+        introduction = st.text_area("Introduction", portfolio_data.introduction, height=100)
+        # photo = st.file_uploader("Profile Photo", type=["jpg", "jpeg", "png"])
     
     if st.button("Save Personal Information"):
-        portfolio_info = {
-            "name": name,
-            "title": title,
-            "location": location,
-            "linkedin": linkedin,
-            "github": github,
-            "twitter": twitter,
-            "other_social": other
-        }
-        
-        if photo is not None:
-            # In a real implementation, we would save the photo
-            portfolio_info["has_photo"] = True
-        
-        st.session_state["portfolio_data"]["personal_info"] = portfolio_info
+        st.session_state["portfolio_data"].personal_info = PersonalInfo(
+            name=name,
+            role=role,
+            introduction=introduction
+        )
         st.success("Personal information saved!")
 
 def about_section():
     st.subheader("About Me")
     
-    about_text = st.text_area(
+    portfolio_data = st.session_state["portfolio_data"].about_me
+    
+    biography = st.text_area(
         "Tell your story",
-        st.session_state["portfolio_data"].get("about", ""),
+        portfolio_data.biography,
         height=300,
         help="Write a compelling bio that highlights your journey, values, and what makes you unique."
     )
     
+    st.subheader("Skills & Interests")
+    
+    # Display existing skills
+    if portfolio_data.skills:
+        st.write("Current Skills:")
+        for i, skill_obj in enumerate(portfolio_data.skills):
+            col1, col2 = st.columns([0.8, 0.2])
+            with col1:
+                st.write(skill_obj.name)
+            with col2:
+                if st.button("Remove", key=f"remove_skill_{i}"):
+                    portfolio_data.skills.pop(i)
+                    st.session_state["portfolio_data"].about_me = portfolio_data
+                    st.rerun()
+    
+    # Add new skill
+    new_skill_name = st.text_input("New Skill", key="new_portfolio_skill_name")
+    if st.button("Add Skill"):
+        if new_skill_name:
+            portfolio_data.skills.append(Skill(name=new_skill_name))
+            st.session_state["portfolio_data"].about_me = portfolio_data
+            st.success(f"Added {new_skill_name} to your skills!")
+            st.rerun()
+    
     if st.button("Save About Me"):
-        st.session_state["portfolio_data"]["about"] = about_text
+        st.session_state["portfolio_data"].about_me.biography = biography
         st.success("About Me section saved!")
+
+def experience_section():
+    st.subheader("Experience")
+
+    portfolio_data = st.session_state["portfolio_data"].experience
+
+    # Display existing experiences
+    for i, exp in enumerate(portfolio_data):
+        with st.expander(f"{exp.role} at {exp.company}"):
+            st.write(f"**Company:** {exp.company}")
+            st.write(f"**Role:** {exp.role}")
+            st.write(f"**Years:** {exp.years}")
+            st.write(f"**Description:** {exp.description}")
+            if st.button("Remove", key=f"remove_exp_{i}"):
+                portfolio_data.pop(i)
+                st.session_state["portfolio_data"].experience = portfolio_data
+                st.rerun()
+
+    # Add new experience
+    with st.expander("Add New Experience"):
+        new_company = st.text_input("Company", key="new_exp_company")
+        new_role = st.text_input("Role", key="new_exp_role")
+        new_years = st.text_input("Years (e.g., 2020-2023)", key="new_exp_years")
+        new_description = st.text_area("Description", key="new_exp_description")
+        if st.button("Add Experience"):
+            if new_company and new_role and new_years and new_description:
+                portfolio_data.append(Experience(company=new_company, role=new_role, years=new_years, description=new_description))
+                st.session_state["portfolio_data"].experience = portfolio_data
+                st.success("Experience added!")
+                st.rerun()
+
+def education_section():
+    st.subheader("Education")
+
+    portfolio_data = st.session_state["portfolio_data"].education
+
+    # Display existing education entries
+    for i, edu in enumerate(portfolio_data):
+        with st.expander(f"{edu.degree} from {edu.institution}"):
+            st.write(f"**Degree:** {edu.degree}")
+            st.write(f"**Institution:** {edu.institution}")
+            st.write(f"**Years:** {edu.years}")
+            if st.button("Remove", key=f"remove_edu_{i}"):
+                portfolio_data.pop(i)
+                st.session_state["portfolio_data"].education = portfolio_data
+                st.rerun()
+
+    # Add new education
+    with st.expander("Add New Education"):
+        new_degree = st.text_input("Degree", key="new_edu_degree")
+        new_institution = st.text_input("Institution", key="new_edu_institution")
+        new_years = st.text_input("Years (e.g., 2016-2020)", key="new_edu_years")
+        if st.button("Add Education"):
+            if new_degree and new_institution and new_years:
+                portfolio_data.append(Education(degree=new_degree, institution=new_institution, years=new_years))
+                st.session_state["portfolio_data"].education = portfolio_data
+                st.success("Education added!")
+                st.rerun()
 
 def projects_section():
     st.subheader("Projects")
     
+    portfolio_data = st.session_state["portfolio_data"].projects
+    
     # Display existing projects
-    for i, proj in enumerate(st.session_state["portfolio_data"]["projects"]):
-        with st.expander(f"{proj.get('title', 'Project')}"):
-            st.write(f"**Project Title:** {proj.get('title', '')}")
-            st.write(f"**Category:** {proj.get('category', '')}")
+    for i, proj in enumerate(portfolio_data):
+        with st.expander(f"{proj.title}"):
+            st.write(f"**Project Title:** {proj.title}")
             st.write(f"**Description:**")
-            st.write(proj.get('description', ''))
-            st.write(f"**Technologies:** {proj.get('technologies', '')}")
-            
-            if proj.get('image_url'):
-                st.write(f"**Image URL:** {proj['image_url']}")
-            
-            if proj.get('project_url'):
-                st.write(f"**Project URL:** {proj['project_url']}")
+            st.write(proj.description)
+            if proj.link:
+                st.write(f"**Project Link:** {proj.link}")
             
             if st.button("Remove", key=f"remove_portfolio_proj_{i}"):
-                st.session_state["portfolio_data"]["projects"].pop(i)
-                st.experimental_rerun()
+                portfolio_data.pop(i)
+                st.session_state["portfolio_data"].projects = portfolio_data
+                st.rerun()
     
     # Add new project
     with st.expander("Add Project"):
         title = st.text_input("Project Title", key="new_portfolio_proj_title")
-        category = st.selectbox(
-            "Category",
-            ["Web Development", "Mobile App", "Data Science", "Machine Learning", 
-             "UI/UX Design", "Game Development", "Other"],
-            key="new_portfolio_proj_category"
-        )
-        
         description = st.text_area("Project Description", key="new_portfolio_proj_desc")
-        technologies = st.text_input("Technologies Used", key="new_portfolio_proj_tech")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            image = st.file_uploader("Project Image", type=["jpg", "jpeg", "png"], key="new_portfolio_proj_img")
-        with col2:
-            image_url = st.text_input("or Image URL", key="new_portfolio_proj_img_url")
-        
-        project_url = st.text_input("Project URL", key="new_portfolio_proj_url")
+        link = st.text_input("Project URL", key="new_portfolio_proj_url")
         
         if st.button("Add Project"):
-            project_data = {
-                "title": title,
-                "category": category,
-                "description": description,
-                "technologies": technologies,
-                "project_url": project_url
-            }
-            
-            if image is not None:
-                # In a real implementation, we would save the image
-                project_data["has_image"] = True
-            elif image_url:
-                project_data["image_url"] = image_url
-            
-            st.session_state["portfolio_data"]["projects"].append(project_data)
-            st.success("Project added!")
-            st.experimental_rerun()
-
-def skills_section():
-    st.subheader("Skills")
-    
-    # Display existing skills
-    if st.session_state["portfolio_data"]["skills"]:
-        st.write("Current Skills:")
-        skills_df = pd.DataFrame(st.session_state["portfolio_data"]["skills"])
-        st.dataframe(skills_df)
-        
-        if st.button("Clear All Skills"):
-            st.session_state["portfolio_data"]["skills"] = []
-            st.experimental_rerun()
-    
-    # Add new skills
-    st.write("Add Skills:")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        skill = st.text_input("Skill Name", key="portfolio_skill_name")
-    
-    with col2:
-        proficiency = st.slider(
-            "Proficiency (%)",
-            min_value=10,
-            max_value=100,
-            step=5,
-            value=75,
-            key="portfolio_skill_prof"
-        )
-    
-    with col3:
-        category = st.selectbox(
-            "Category",
-            ["Technical", "Creative", "Soft Skills", "Languages", "Tools", "Other"],
-            key="portfolio_skill_cat"
-        )
-    
-    if st.button("Add Skill"):
-        st.session_state["portfolio_data"]["skills"].append({
-            "skill": skill,
-            "proficiency": proficiency,
-            "category": category
-        })
-        st.success(f"Added {skill} to your skills!")
-        st.experimental_rerun()
+            if title and description:
+                portfolio_data.append(Project(title=title, description=description, link=link))
+                st.session_state["portfolio_data"].projects = portfolio_data
+                st.success("Project added!")
+                st.rerun()
 
 def contact_section():
     st.subheader("Contact Information")
     
+    portfolio_data = st.session_state["portfolio_data"].contact
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        email = st.text_input("Email", st.session_state["portfolio_data"]["contact"].get("email", ""))
-        phone = st.text_input("Phone", st.session_state["portfolio_data"]["contact"].get("phone", ""))
+        email = st.text_input("Email", portfolio_data.email)
+        phone = st.text_input("Phone", portfolio_data.phone)
     
     with col2:
-        location = st.text_input("Location", st.session_state["portfolio_data"]["contact"].get("location", ""))
-        availability = st.selectbox(
-            "Availability",
-            ["Available for hire", "Open to freelance", "Not available", "Contact me"],
-            index=0 if not st.session_state["portfolio_data"]["contact"].get("availability") else 
-                  ["Available for hire", "Open to freelance", "Not available", "Contact me"].index(
-                      st.session_state["portfolio_data"]["contact"].get("availability")
-                  )
-        )
-    
-    contact_message = st.text_area(
-        "Contact Form Message",
-        st.session_state["portfolio_data"]["contact"].get("message", "Thank you for your interest! Please fill out the form to get in touch with me."),
-        height=100
-    )
+        linkedin = st.text_input("LinkedIn", portfolio_data.linkedin)
+        github = st.text_input("GitHub", portfolio_data.github)
+        twitter = st.text_input("Twitter", portfolio_data.twitter)
     
     if st.button("Save Contact Information"):
-        st.session_state["portfolio_data"]["contact"] = {
-            "email": email,
-            "phone": phone,
-            "location": location,
-            "availability": availability,
-            "message": contact_message
-        }
+        st.session_state["portfolio_data"].contact = Contact(
+            email=email,
+            phone=phone,
+            linkedin=linkedin,
+            github=github,
+            twitter=twitter
+        )
         st.success("Contact information saved!")
 
-def preview_portfolio():
-    st.header("Portfolio Preview")
-    
-    # Personal Information
-    personal = st.session_state["portfolio_data"]["personal_info"]
-    if personal:
-        st.title(personal.get("name", "Your Name"))
-        st.subheader(personal.get("title", "Professional Title"))
-        st.write(f"📍 {personal.get('location', 'Location')}")
-        
-        # Social media links
-        social_links = []
-        if personal.get("linkedin"): social_links.append(f"[LinkedIn]({personal['linkedin']})")
-        if personal.get("github"): social_links.append(f"[GitHub]({personal['github']})")
-        if personal.get("twitter"): social_links.append(f"[Twitter]({personal['twitter']})")
-        if personal.get("other_social"): social_links.append(f"[Other]({personal['other_social']})")
-        
-        if social_links:
-            st.write(" | ".join(social_links))
-    
-    # About section
-    if st.session_state["portfolio_data"].get("about"):
-        st.header("About Me")
-        st.write(st.session_state["portfolio_data"]["about"])
-    
-    # Projects section
-    if st.session_state["portfolio_data"]["projects"]:
-        st.header("Projects")
-        
-        for i, project in enumerate(st.session_state["portfolio_data"]["projects"]):
-            col1, col2 = st.columns([1, 2])
-            
-            with col1:
-                if project.get("image_url"):
-                    st.image(project["image_url"], use_column_width=True)
-                elif project.get("has_image"):
-                    st.image("https://via.placeholder.com/300x200?text=Project+Image", use_column_width=True)
-            
-            with col2:
-                st.subheader(project.get("title", "Project Title"))
-                st.write(f"**Category:** {project.get('category', 'Category')}")
-                st.write(project.get("description", "Project description"))
-                st.write(f"**Technologies:** {project.get('technologies', 'Technologies')}")
-                
-                if project.get("project_url"):
-                    st.write(f"[View Project]({project['project_url']})")            
-                    st.divider()
-    
-    # Skills section
-    if st.session_state["portfolio_data"]["skills"]:
-        st.header("Skills")
-        
-        # Group skills by category
-        skills_by_category = {}
-        for skill in st.session_state["portfolio_data"]["skills"]:
-            category = skill.get("category", "Other")
-            if category not in skills_by_category:
-                skills_by_category[category] = []
-            skills_by_category[category].append(skill)
-        
-        # Display skills by category
-        for category, skills in skills_by_category.items():
-            st.subheader(category)
-            for skill in skills:
-                st.write(f"{skill.get('skill', 'Skill')}: {skill.get('proficiency', 0)}%")
-                st.progress(int(skill.get('proficiency', 0)) / 100)
-    
-    # Contact section
-    if st.session_state["portfolio_data"]["contact"]:
-        st.header("Contact Me")
-        contact = st.session_state["portfolio_data"]["contact"]
-        
-        st.write(contact.get("message", ""))
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write(f"**Email:** {contact.get('email', '')}")
-            st.write(f"**Phone:** {contact.get('phone', '')}")
-        
-        with col2:
-            st.write(f"**Location:** {contact.get('location', '')}")
-            st.write(f"**Status:** {contact.get('availability', '')}")
+
+def upload_resume_section():
+    st.subheader("Upload Resume for Portfolio Creation")
+
+    uploaded_file = st.file_uploader("Upload your resume (PDF or JSON format)", type=["pdf", "json"])
+
+    if uploaded_file:
+        st.info("This feature is under development. Uploaded file will not be processed yet.")

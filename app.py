@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
-from src.pages import home, resume_builder, portfolio_builder # This line needs to be updated
+from src.pages import home, resume_builder, portfolio_builder
 
 st.set_page_config(page_title='AI Resume & Portfolio Builder', layout='wide')
 

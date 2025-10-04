@@ -1,5 +1,43 @@
 import os
 import google.generativeai as genai
+import requests
+
+JDOODLE_CLIENT_ID = os.environ.get("JDOODLE_CLIENT_ID")
+JDOODLE_CLIENT_SECRET = os.environ.get("JDOODLE_CLIENT_SECRET")
+
+def execute_code(language: str, script: str, stdin: str = "") -> dict:
+    """
+    Executes code using the JDoodle API.
+
+    Args:
+        language: The programming language of the script (e.g., "python3", "java").
+        script: The code to be executed.
+        stdin: Optional input for the script.
+
+    Returns:
+        A dictionary containing the output, statusCode, and any error messages from the JDoodle API.
+    """
+    if not JDOODLE_CLIENT_ID or not JDOODLE_CLIENT_SECRET:
+        return {"error": "JDoodle API credentials not set.", "statusCode": 500}
+
+    url = "https://api.jdoodle.com/v1/execute"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "clientId": JDOODLE_CLIENT_ID,
+        "clientSecret": JDOODLE_CLIENT_SECRET,
+        "script": script,
+        "language": language,
+        "stdin": stdin,
+        "versionIndex": "0"  # Use default version index
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": f"JDoodle API request failed: {e}", "statusCode": 500}
+
 
 # Initialize the Gemini model once when the module is loaded
 _gemini_model = None
