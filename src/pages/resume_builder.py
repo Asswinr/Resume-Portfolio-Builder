@@ -337,39 +337,7 @@ def preview_resume():
 
             <div class="section">
                 <h3>Education</h3>
-                {''.join([f'<div class="timeline-item"><h4>{edu['degree']} - {edu['institution']}</h4><p>{edu['start_date']} - {edu['end_date']}</p><p>{edu['description']}</p></div>' for edu in resume_data['education']])}
-            </div>
-
-            <div class="section">
-                <h3>Experience</h3>
-                {''.join([f'<div class="timeline-item"><h4>{exp['title']} - {exp['company']}</h4><p>{exp['start_date']} - {exp['end_date']}</p><p>{exp['description']}</p></div>' for exp in resume_data['experience']])}
-            </div>
-
-            <div class="section">
-                <h3>Skills</h3>
-                {''.join([f'<div><h4>{category}</h4><p>{", ".join(skills)}</p></div>' for category, skills in resume_data['skills'].items()])}
-            </div>
-
-            <div class="section">
-                <h3>Projects</h3>
-                {''.join([f'<div class="timeline-item"><h4>{proj['title']}</h4><p>{proj['description']}</p>{f'<a href="{proj['link']}" target="_blank">View Project</a>' if proj['link'] else ''}</div>' for proj in resume_data['projects']])}
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-    # Display resume HTML
-    st.components.v1.html(resume_html, height=800, scrolling=True)
-
-    # Add button to share data with portfolio builder
-    if st.button("Share Data with Portfolio Builder"):
-        st.session_state["portfolio_data"] = st.session_state["resume_data"]
-        st.success("Data shared with Portfolio Builder!")
-
-
-def additional_info_section():
-    st.subheader("Additional Information")
+                {''.join([f'<div class="timeline-item"><h4>{edu.get("et("de", "N/A")ee", "N/.get(")} - {edu.g", "N/A")("institution.get(" "N/A")}</", "N/A")><p>{edu.gea("rteget(s, "NA)pu.g("",NdAdugi(u,)    st.subheader("Additional Information")
     # Placeholder for additional information input
     st.write("This section is under construction.")
 

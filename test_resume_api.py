@@ -40,7 +40,7 @@ payload = {
 }
 
 try:
-    response = requests.post(url, data=json.dumps(payload), headers=headers)
+    response = requests.post(url, json=payload, timeout=30)
 
     if response.status_code == 200:
         with open("generated_resume.pdf", "wb") as f:

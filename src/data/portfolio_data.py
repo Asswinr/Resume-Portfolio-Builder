@@ -37,8 +37,8 @@ class Project:
 
 @dataclass
 class Contact:
-    email: str = ""
-    phone: str = ""
+    email: Optional[str] = None
+    phone: Optional[str] = None
     linkedin: Optional[str] = None
     github: Optional[str] = None
     twitter: Optional[str] = None
