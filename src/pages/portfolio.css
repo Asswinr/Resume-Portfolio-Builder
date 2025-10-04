@@ -130,9 +130,11 @@ h4 { font-size: 1rem; color: var(--accent-color); margin-bottom: 0.5rem; }
     font-weight: 600;
     border-radius: 5px;
     border: none;
-     cursor: pointer;
-     font-size: 1rem;
-    @media (prefers-reduced-motion: no-preference) {
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
     .cta-button {
         transition: transform 0.3s ease, background-color 0.3s ease;
     }
@@ -143,12 +145,11 @@ h4 { font-size: 1rem; color: var(--accent-color); margin-bottom: 0.5rem; }
     outline-offset: 4px;
 }
 
- .cta-button:hover {
-     transform: translateY(-3px);
-     background-color: #8ac0e8;
- }
+.cta-button:hover {
+    transform: translateY(-3px);
+    background-color: #8ac0e8;
+}
 
-    
 
 /* Timeline for Education & Experience */
 .timeline {
@@ -222,13 +223,6 @@ h4 { font-size: 1rem; color: var(--accent-color); margin-bottom: 0.5rem; }
     outline-offset: 2px;
     border-color: var(--accent-color);
 }
-.contact-form input:focus,
-.contact-form textarea:focus {
-    outline: 2px solid var(--accent-color);
-    outline-offset: 2px;
-    border-color: var(--accent-color);
-}
-
 .contact-form input::placeholder,
 .contact-form textarea::placeholder {
     color: var(--primary-color);
@@ -254,13 +248,13 @@ footer {
     h1 { font-size: 2.5rem; }
     h2 { font-size: 2rem; }
     
-    nav ul {
-        display: none; /* Simple hiding for mobile, can be replaced with a hamburger menu */
+    .container {
+        padding: 2rem;
     }
     
-    /* Mobile menu toggle button (add to HTML) */
+    /* Mobile menu toggle button */
     .mobile-menu-toggle {
-        display: none;
+        display: block;
         background: none;
         border: none;
         color: var(--secondary-color);
@@ -268,76 +262,6 @@ footer {
         cursor: pointer;
         padding: 0.5rem;
     }
-}
-
-@media (max-width: 768px) {
-    .mobile-menu-toggle {
-        display: block;
-    }
-    
-    nav ul {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        height: 100vh;
-        width: 70%;
-        background: rgba(27, 47, 71, 0.95);
-        flex-direction: column;
-        padding: 4rem 2rem;
-        transition: right 0.3s ease;
-    }
-    
-    nav ul.open {
-        right: 0;
-    }
-
-    .container {
-        padding: 2rem;
-    }
-}
-
-.contact-form input::placeholder,
-.contact-form textarea::placeholder {
-    color: var(--primary-color);
-}
-
-.social-links a {
-    color: var(--accent-color);
-    text-decoration: none;
-    margin: 0 10px;
-    font-weight: 600;
-}
-
-/* --- Footer --- */
-footer {
-    text-align: center;
-    padding: 2rem;
-    background-color: rgba(13, 27, 42, 0.5);
-    font-size: 0.9rem;
-}
-
-/* --- Responsive Design --- */
-@media (max-width: 768px) {
-    h1 { font-size: 2.5rem; }
-    h2 { font-size: 2rem; }
-    
-    nav ul {
-        display: none; /* Simple hiding for mobile, can be replaced with a hamburger menu */
-    /* Mobile menu toggle button (add to HTML) */
-.mobile-menu-toggle {
-    display: none;
-    background: none;
-    border: none;
-    color: var(--secondary-color);
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-}
-
-@media (max-width: 768px) {
-    .mobile-menu-toggle {
-        display: block;
-    }
     
     nav ul {
         position: fixed;
@@ -355,9 +279,3 @@ footer {
         right: 0;
     }
 }
-}
-
-    .container {
-        padding: 2rem;
-    }
-}}

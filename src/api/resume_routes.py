@@ -1,3 +1,4 @@
+import html
 from flask import Blueprint, request, jsonify, send_file, current_app
 from io import BytesIO
 from weasyprint import HTML, CSS
@@ -9,30 +10,21 @@ def generate_resume_pdf():
     try:
         data = request.get_json(silent=True)
         if not data:
-            return jsonify({"error": "No JSON payload provided"}), 400
         # Validate required fields
         required_fields = ['personal_info', 'about_me', 'skills', 'education', 'experience', 'projects', 'contacts']
+
         for field in required_fields:
-            if field not in user_data:
-                return jsonify({"error": f"Missing required field: {field}"}), 400
-        
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400                
         # Validate data types
-        if not isinstance(user_data.get('personal_info', {}), dict):
+        if not isinstance(data.get('personal_info', {}), dict):
             return jsonify({"error": "'personal_info' must be a dictionary"}), 400
-        
-        if not isinstance(user_data.get('about_me', ''), str):
+
+        if not isinstance(data.get('about_me', ''), str):
+            return jsonify({"error": "'about_me' must be a string"}), 400        if not isinstance(user_data.get('about_me', ''), str):
             return jsonify({"error": "'about_me' must be a string"}), 400
-        
-        # Extract validated data
-        data = {
-            'personal_info': user_data['personal_info'],
-            'about_me': user_data['about_me'],
-            'skills': user_data['skills'],
-            'education': user_data['education'],
-            'experience': user_data['experience'],
-            'projects': user_data['projects'],
-            'contacts': user_data['contacts']
-        }
+        # Data is already extracted from request.get_json() at line 10
+        # Validation ensures required fields exist        }
 
         # Generate HTML content from the provided data
         html_content = f"""
@@ -98,9 +90,8 @@ def generate_resume_pdf():
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>{data.escape(data.get('personal_info', {}).get('name', ''))}</h1>
-                    <p>{data.get('personal_info', {}).get('role', '')}</p>
-                    <p>{data.get('personal_info', {}).get('email', '')} | {data.get('personal_info', {}).get('phone', '')} | {data.get('personal_info', {}).get('linkedin', '')} | {data.get('personal_info', {}).get('github', '')}</p>
+                    <p>{html.escape(data.get('personal_info', {}).get('role', ''))}</p>
+                    <p>{html.escape(data.get('personal_info', {}).get('email', ''))} | {html.escape(data.get('personal_info', {}).get('phone', ''))} | {html.escape(data.get('personal_info', {}).get('linkedin', ''))} | {html.escape(data.get('personal_info', {}).get('github', ''))}</p>                    <p>{data.get('personal_info', {}).get('email', '')} | {data.get('personal_info', {}).get('phone', '')} | {data.get('personal_info', {}).get('linkedin', '')} | {data.get('personal_info', {}).get('github', '')}</p>
                 </div>
 
                 <div class="section">
