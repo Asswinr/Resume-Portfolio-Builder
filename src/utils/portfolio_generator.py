@@ -12,7 +12,7 @@ def generate_portfolio_html(portfolio_data: PortfolioData) -> str:
     """
 
     # Path to your HTML template
-    template_path = Path(__file__).resolve().parent.parent.parent / "frontend" / "portfolio.html"
+    template_path = Path(__file__).resolve().parent.parent / "pages" / "portfolio.html"
     css_path = "portfolio.css"
     js_path = "portfolio.js"
 
