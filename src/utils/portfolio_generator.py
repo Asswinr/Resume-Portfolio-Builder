@@ -1,131 +1,144 @@
-"""
-Portfolio Generator Module
-Generates HTML portfolio from user data using template-based approach
-"""
+import os
+from pathlib import Path
 from typing import List
 from dataclasses import asdict
-from pathlib import Path
-from src.data.portfolio_data import PortfolioData, PersonalInfo, Skill, AboutMe, Experience, Education, Project, Contact
-
-# Import the advanced template-based generator
-from .advanced_portfolio_generator import generate_portfolio_html as generate_template_portfolio
+from src.data.portfolio_data import PortfolioData
 
 
 def generate_portfolio_html(portfolio_data: PortfolioData) -> str:
     """
-    Generate complete portfolio HTML from portfolio data using template approach
+    Generates a complete HTML portfolio by injecting user data
+    into the provided portfolio.html template.
     """
-    # Convert portfolio data to dictionary format for template
-    portfolio_dict = {
-        "personal_info": asdict(portfolio_data.personal_info),
-        "about_me": {
-            "biography": portfolio_data.about_me.biography,
-            "skills": [asdict(skill) for skill in portfolio_data.about_me.skills]
-        },
-        "education": [asdict(edu) for edu in portfolio_data.education],
-        "experience": [asdict(exp) for exp in portfolio_data.experience],
-        "projects": [asdict(proj) for proj in portfolio_data.projects],
-        "contact": asdict(portfolio_data.contact)
-    }
-    
-    # Generate HTML using template-based approach
-    return generate_template_portfolio(portfolio_dict)
 
+    # Path to your HTML template
+    template_path = Path(__file__).resolve().parent.parent / "pages" / "portfolio.html"
+    css_path = "portfolio.css"
+    js_path = "portfolio.js"
 
-def save_portfolio_to_file(portfolio_data: PortfolioData, output_path: str) -> None:
-    """
-    Generate portfolio HTML and save to file
-    """
-    html_content = generate_portfolio_html(portfolio_data)
-    
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(html_content)
+    # Read the existing HTML template
+    if not template_path.exists():
+        raise FileNotFoundError(f"Portfolio template not found at {template_path}")
+    html = template_path.read_text(encoding="utf-8")
 
+    # Replace static placeholders with user data
+    personal = portfolio_data.personal_info
+    about = portfolio_data.about_me
+    education = portfolio_data.education
+    experience = portfolio_data.experience
+    contact = portfolio_data.contact
+    projects = portfolio_data.projects
 
-def get_sample_portfolio_data() -> PortfolioData:
-    """
-    Get sample portfolio data for testing
-    """
-    return PortfolioData(
-        personal_info=PersonalInfo(
-            name="John Doe",
-            role="Full Stack Developer",
-            location="San Francisco, CA"
-        ),
-        about_me=AboutMe(
-            biography="Passionate developer with 5+ years of experience in building scalable web applications. Specialized in Python, JavaScript, and cloud technologies.",
-            skills=[
-                Skill(name="Python", level="Expert"),
-                Skill(name="JavaScript", level="Expert"),
-                Skill(name="React", level="Advanced"),
-                Skill(name="Node.js", level="Advanced"),
-                Skill(name="AWS", level="Intermediate"),
-                Skill(name="Docker", level="Intermediate")
-            ]
-        ),
-        education=[
-            Education(
-                degree="Bachelor of Science in Computer Science",
-                institution="University of Technology",
-                period="2015-2019",
-                description="Graduated with honors. Focused on software engineering and algorithms.",
-                gpa="3.8"
-            ),
-            Education(
-                degree="Master of Science in Data Science",
-                institution="Tech Institute",
-                period="2019-2021",
-                description="Specialized in machine learning and big data technologies.",
-                gpa="3.9"
-            )
-        ],
-        experience=[
-            Experience(
-                position="Senior Developer",
-                company="Tech Corp",
-                period="2020-Present",
-                description="Leading development of enterprise-scale applications",
-                responsibilities=[
-                    "Team leadership and mentorship",
-                    "Architecture design and implementation",
-                    "Code reviews and quality assurance",
-                    "Agile project management"
-                ]
-            ),
-            Experience(
-                position="Software Engineer",
-                company="Startup Inc",
-                period="2019-2020",
-                description="Full-stack development for early-stage startup",
-                responsibilities=[
-                    "Frontend development with React",
-                    "Backend development with Node.js",
-                    "Database design and optimization",
-                    "DevOps and deployment"
-                ]
-            )
-        ],
-        projects=[
-            Project(
-                name="E-commerce Platform",
-                description="Full-stack e-commerce solution with payment integration",
-                technologies=["React", "Node.js", "MongoDB", "Stripe"],
-                github_url="https://github.com/johndoe/ecommerce",
-                live_url="https://ecommerce.example.com"
-            ),
-            Project(
-                name="Task Management App",
-                description="Collaborative task management application",
-                technologies=["Vue.js", "Python", "PostgreSQL", "Docker"],
-                github_url="https://github.com/johndoe/taskmanager",
-                live_url="https://taskmanager.example.com"
-            )
-        ],
-        contact=Contact(
-            email="john.doe@example.com",
-            phone="+1-555-0123",
-            linkedin="https://linkedin.com/in/johndoe",
-            github="https://github.com/johndoe",
-            twitter="https://twitter.com/johndoe"
-        )
+    # ---- Replace Main Hero Section ----
+    html = html.replace("Your Name", personal.name or "Your Name")
+    html = html.replace("[Your Name]", personal.name or "Your Name")
+    html = html.replace("[Your Profession, e.g., Web Developer]", personal.role or "Your Profession")
+
+    # ---- About Me ----
+    bio_html = about.biography or "Welcome to my portfolio!"
+    skills_html = ""
+    if about.skills:
+        skills_html = "<ul style='margin-top:1rem;'>"
+        for skill in about.skills:
+            skills_html += f"<li>{skill.name}</li>"
+        skills_html += "</ul>"
+
+    html = html.replace(
+        "Replace this text with a brief but engaging summary about yourself, your skills, and what drives you. "
+        "Mention your key areas of expertise and what you're looking for in your career.",
+        f"{bio_html}{skills_html}"
     )
+
+    # ---- Education ----
+    edu_html = ""
+    for edu in education:
+        edu_html += f"""
+        <div class="timeline-item">
+            <h3>{edu.degree}</h3>
+            <h4>{edu.institution} | {edu.years}</h4>
+        </div>
+        """
+    html = html.replace(
+        """<div class="timeline">
+                    <div class="timeline-item">
+                        <h3>Master's Degree in Computer Science</h3>
+                        <h4>University Name | 2022 - 2024</h4>
+                        <p>Focused on advanced algorithms, machine learning, and software architecture. Completed a thesis on [Your Thesis Topic].</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h3>Bachelor's Degree in Information Technology</h3>
+                        <h4>Another University Name | 2018 - 2022</h4>
+                        <p>Gained a strong foundation in programming, database management, and web development. Graduated with honors.</p>
+                    </div>
+                </div>""",
+        f"<div class='timeline'>{edu_html}</div>"
+    )
+
+    # ---- Experience ----
+    exp_html = ""
+    for exp in experience:
+        exp_html += f"""
+        <div class="timeline-item">
+            <h3>{exp.role}</h3>
+            <h4>{exp.company} | {exp.years}</h4>
+            <p>{exp.description}</p>
+        </div>
+        """
+    html = html.replace(
+        """<div class="timeline">
+                    <div class="timeline-item">
+                        <h3>Senior Software Engineer</h3>
+                        <h4>Tech Company Inc. | 2024 - Present</h4>
+                        <p>Lead developer on the main product team. Responsible for architecting new features, mentoring junior developers, and improving system performance by 20%.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h3>Junior Web Developer</h3>
+                        <h4>Creative Agency | 2022 - 2024</h4>
+                        <p>Developed and maintained client websites using HTML, CSS, JavaScript, and Python/Django. Collaborated with designers to create responsive and user-friendly interfaces.</p>
+                    </div>
+                </div>""",
+        f"<div class='timeline'>{exp_html}</div>"
+    )
+
+    # ---- Projects Section ----
+    if projects:
+        proj_html = ""
+        for proj in projects:
+            proj_html += f"""
+            <div class="timeline-item">
+                <h3>{proj.title}</h3>
+                <p>{proj.description}</p>
+                {'<a href="' + proj.link + '" target="_blank">View Project</a>' if proj.link else ''}
+            </div>
+            """
+        html = html.replace("</section>\n\n        <section id=\"contact\">", f"<div class='timeline'>{proj_html}</div>\n</section>\n\n        <section id=\"contact\">")
+
+    # ---- Contact Info ----
+    contact_links = ""
+    if contact.linkedin:
+        contact_links += f"<a href='{contact.linkedin}' target='_blank'>LinkedIn</a> | "
+    if contact.github:
+        contact_links += f"<a href='{contact.github}' target='_blank'>GitHub</a> | "
+    if contact.twitter:
+        contact_links += f"<a href='{contact.twitter}' target='_blank'>Twitter</a>"
+
+    contact_html = f"""
+        <p>Email: <a href='mailto:{contact.email}'>{contact.email}</a></p>
+        <p>Phone: {contact.phone}</p>
+        <div class="social-links">{contact_links}</div>
+    """
+
+    html = html.replace(
+        """<div class="social-links">
+                    <a href="#">LinkedIn</a> | <a href="#">GitHub</a> | <a href="#">Twitter</a>
+                </div>""",
+        contact_html
+    )
+
+    # ---- Custom Color ----
+    if hasattr(portfolio_data, "custom_css") and portfolio_data.custom_css:
+        css_tag = f"<style>{portfolio_data.custom_css}</style>"
+        html = html.replace("</head>", f"{css_tag}</head>")
+
+    # Return final HTML for rendering in Streamlit
+    return html
